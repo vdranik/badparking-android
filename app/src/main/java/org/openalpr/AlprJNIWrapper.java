@@ -1,12 +1,15 @@
 /**
  * 
  */
-package ua.in.badparking.alpr;
+package org.openalpr;
 
 public class AlprJNIWrapper implements Alpr {
     
 	static {
-		System.loadLibrary("openalpr-native");
+		System.loadLibrary("openalpr_native");
+//		System.loadLibrary("lept");
+//		System.loadLibrary("opencv_java");
+//		System.loadLibrary("tess");
 	}
 
 	/* (non-Javadoc)

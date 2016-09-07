@@ -23,6 +23,9 @@ import android.widget.TextView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.openalpr.Alpr;
+import org.openalpr.app.AlprResult;
+import org.openalpr.app.AlprResultItem;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,10 +39,6 @@ import butterknife.Unbinder;
 import ua.in.badparking.CameraWrapper;
 import ua.in.badparking.Constants;
 import ua.in.badparking.R;
-import ua.in.badparking.alpr.Alpr;
-import ua.in.badparking.alpr.AlprCandidate;
-import ua.in.badparking.alpr.AlprResult;
-import ua.in.badparking.alpr.AlprResultItem;
 import ua.in.badparking.services.ClaimState;
 import ua.in.badparking.ui.activities.MainActivity;
 import ua.in.badparking.ui.adapters.PhotoAdapter;
@@ -75,7 +74,7 @@ public class CaptureFragment extends BaseFragment implements View.OnClickListene
     private Unbinder unbinder;
     private CameraWrapper cameraWrapper;
     private AlprTask alprTask;
-    private ProgressDialog progressDialog;
+
 
     public static CaptureFragment newInstance() {
         return new CaptureFragment();
@@ -86,7 +85,6 @@ public class CaptureFragment extends BaseFragment implements View.OnClickListene
         View rootView = inflater.inflate(R.layout.fragment_capture, container, false);
         unbinder = ButterKnife.bind(this, rootView);
         surfaceView = new SurfaceView(inflater.getContext());
-        alprTask = new AlprTask();
         return rootView;
     }
 
@@ -200,6 +198,7 @@ public class CaptureFragment extends BaseFragment implements View.OnClickListene
             String openAlprConfFile = Constants.ANDROID_DATA_DIR + File.separatorChar +
                     Constants.RUNTIME_DATA_DIR_ASSET + File.separatorChar +Constants.OPENALPR_CONF_FILE;
 
+            alprTask = new AlprTask();
             String parameters[] = {Constants.REGION, "", photoPath, openAlprConfFile, "1"};
             alprTask.execute(parameters);
         }
@@ -262,8 +261,8 @@ public class CaptureFragment extends BaseFragment implements View.OnClickListene
 
     class AlprTask extends AsyncTask<String, Void, AlprResult> {
 
-        Alpr alpr;
-
+        private Alpr alpr;
+        private ProgressDialog progressDialog;
         @Override
         protected void onPreExecute() {
             if(alpr == null){
@@ -274,7 +273,7 @@ public class CaptureFragment extends BaseFragment implements View.OnClickListene
         @Override
         protected void onProgressUpdate(Void... values) {
             if(progressDialog == null){
-                prepareProgressDialog();
+              //  prepareProgressDialog();
             }
         }
 
@@ -293,11 +292,14 @@ public class CaptureFragment extends BaseFragment implements View.OnClickListene
                         confFile, topN);
                 AlprResult alprResult = processJsonResult(result);
 
+                Log.i(TAG, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"+result);
+                ///deleteImageFile(filePath);
+
                 return alprResult;
             }
 
-            AlprResult alprResult = new AlprResult();
-            alprResult.addCandidate(new AlprCandidate());
+//            AlprResult alprResult = new AlprResult();
+//            alprResult.addCandidate(new AlprCandidate());
             return new AlprResult();
         }
 
@@ -338,23 +340,31 @@ public class CaptureFragment extends BaseFragment implements View.OnClickListene
                     plate.setText(plateNumber);
                     ClaimState.INST.getClaim().addPhoto(plateNumber);
                 }
-                cleanUpProgressDialog();
+               // cleanUpProgressDialog();
             }else {
                 plate.setText("Роспізнати не вдалось");
-                cleanUpProgressDialog();
+               // cleanUpProgressDialog();
             }
         }
 
         private void prepareProgressDialog(){
-            progressDialog = new ProgressDialog(getContext());
+            progressDialog = new ProgressDialog(getActivity());
             progressDialog.setCanceledOnTouchOutside(false);
             progressDialog.setMessage("Роспізнавання...");
             progressDialog.show();
         }
 
-        private void cleanUpProgressDialog() {
-            progressDialog.dismiss();
-            progressDialog = null;
-        }
+//        private void cleanUpProgressDialog() {
+//            progressDialog.dismiss();
+//            progressDialog = null;
+//        }
+
+//        private void deleteImageFile(final String filePath){
+//            File file = new File(filePath);
+//            if(file.exists()){
+//                file.delete();
+//               // Log.i(LOG_TAG, String.format("Deleted file %s", filePath));
+//            }
+//        }
     }
 }

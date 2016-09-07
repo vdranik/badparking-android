@@ -1,4 +1,4 @@
-package ua.in.badparking.alpr;
+package org.openalpr.app;
 
 import java.io.Serializable;
 

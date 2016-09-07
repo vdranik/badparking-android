@@ -1,4 +1,4 @@
-package ua.in.badparking.alpr;
+package org.openalpr;
 
 public interface Alpr {
 	/**
@@ -40,7 +40,9 @@ public interface Alpr {
 	 * @return - Version string
 	 */
 	String version();
-	
+
+
+
 	public static class Factory {
         static Alpr instance;
 		public synchronized static Alpr create(){
