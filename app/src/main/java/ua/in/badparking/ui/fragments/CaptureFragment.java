@@ -32,6 +32,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.cameraview.CameraView;
+import com.google.gson.annotations.SerializedName;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -40,18 +41,28 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
+import io.jsonwebtoken.Claims;
 import ua.in.badparking.R;
 import ua.in.badparking.events.ShowHeaderEvent;
+import ua.in.badparking.model.Claim;
+import ua.in.badparking.model.MediaFile;
+import ua.in.badparking.model.User;
 import ua.in.badparking.services.ClaimService;
 import ua.in.badparking.ui.activities.MainActivity;
 import ua.in.badparking.ui.adapters.PhotoAdapter;
 import ua.in.badparking.utils.ConfirmationDialogFragment;
 import ua.in.badparking.utils.Constants;
 import ua.in.badparking.utils.Utils;
+
+import static ua.in.badparking.utils.Constants.CLAIM_STATE;
 
 /**
  * @author Dima Kovalenko
@@ -68,6 +79,10 @@ public class CaptureFragment extends BaseFragment implements View.OnClickListene
     private static final int PHOTO_MAX_HEIGHT = 1024;
     private static final int QUALITY_PHOTO = 40;
     private static final String FRAGMENT_DIALOG = "dialog";
+
+    int orientation;
+    float roll;
+    float pitch;
 
     @BindView(R.id.camera)
     protected CameraView cameraView;
@@ -146,7 +161,7 @@ public class CaptureFragment extends BaseFragment implements View.OnClickListene
             @Override
             public void afterTextChanged(Editable editable) {
                 int photosTaken = ClaimService.INST.getClaim().getPhotoFiles().size();
-                nextButton.setEnabled(photosTaken > 1 && platesEditText.getText().length() >=
+                nextButton.setEnabled(photosTaken > 1 && platesEditText.getText().toString().trim().length() >=
                         Constants.MIN_CARPLATE_LENGTH ? true : false);
             }
         });
@@ -188,13 +203,7 @@ public class CaptureFragment extends BaseFragment implements View.OnClickListene
             recyclerView.setVisibility(View.GONE);
             setPic(platesPreviewImage, ClaimService.INST.getClaim().getPhotoFiles().get(1).getPath());
             if (TextUtils.isEmpty(ClaimService.INST.getClaim().getLicensePlates())) {
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                        imm.showSoftInput(platesEditText, InputMethodManager.SHOW_IMPLICIT);
-                    }
-                }, 800);
+                showCarPlateKeyboard();
             }
         } else {
             nextButton.setVisibility(View.VISIBLE);
@@ -248,6 +257,8 @@ public class CaptureFragment extends BaseFragment implements View.OnClickListene
             ActivityCompat.requestPermissions(getActivity(), new String[] {Manifest.permission.CAMERA},
                     REQUEST_CAMERA_PERMISSION);
         }
+
+        logging(this.getClass(), ClaimService.INST.getClaim());
     }
 
     @Override
@@ -255,7 +266,7 @@ public class CaptureFragment extends BaseFragment implements View.OnClickListene
         switch (view.getId()) {
             case R.id.snap:
                 if (cameraView != null && cameraView.isCameraOpened() && isSafeToTakePicture()) {
-                    Log.d(TAG, String.valueOf(cameraView.isCameraOpened()));
+                    //Log.d(TAG, String.valueOf(cameraView.isCameraOpened()));
                     snapButton.setVisibility(View.GONE);
                     cameraView.takePicture();
                     Utils.shootSound(getActivity());
@@ -308,12 +319,12 @@ public class CaptureFragment extends BaseFragment implements View.OnClickListene
 
         @Override
         public void onCameraOpened(CameraView cameraView) {
-            Log.d(TAG, "onCameraOpened - " + cameraView.isCameraOpened());
+            //Log.d(TAG, "onCameraOpened - " + cameraView.isCameraOpened());
         }
 
         @Override
         public void onCameraClosed(CameraView cameraView) {
-            Log.d(TAG, "onCameraClosed: isopen - " + cameraView.isCameraOpened());
+            //Log.d(TAG, "onCameraClosed: isopen - " + cameraView.isCameraOpened());
         }
 
         @Override
@@ -347,7 +358,7 @@ public class CaptureFragment extends BaseFragment implements View.OnClickListene
                     Matrix matrix = new Matrix();
                     matrix.postRotate(m_nOrientation);
                     Bitmap rotatedBitmap = Bitmap.createBitmap(photoBm, 0, 0, photoBm.getWidth(), photoBm.getHeight(), matrix, true);
-                    Log.d(TAG,"ORIENTATION "+ m_nOrientation);
+                    //Log.d(TAG,"ORIENTATION "+ m_nOrientation);
 
                     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
                     rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, QUALITY_PHOTO, bytes);
@@ -374,6 +385,20 @@ public class CaptureFragment extends BaseFragment implements View.OnClickListene
                             onImageFileCreated(file.getPath());
                         }
                     });
+
+
+                    Log.d(TAG,"IS TABLET? "+ isTablet);
+                    Log.d(TAG, "Android configuration orientation: " + getResources().getConfiguration().orientation);
+                    Log.d(TAG, "WindowManager rotation: " + getActivity().getWindowManager().getDefaultDisplay()
+                            .getRotation());
+                    Log.d(TAG, "CameraView config orientation " + cameraView.getResources().getConfiguration().orientation);
+                    Log.d(TAG, "CAmeraView diaplay orientation " +  cameraView.getDisplay().getRotation());
+                    Log.d(TAG, "ROLL " + roll);
+                    Log.d(TAG, "PITCH " + pitch);
+                    Log.d(TAG, "Standart orientation with isTablet correction " + orientation);
+                    Log.d(TAG, "FINAL ORIENTATION DEGREE " + m_nOrientation);
+                    Log.d(TAG, "=====================================================================");
+
 
                     setSafeToTakePicture(true);
                 }
@@ -421,8 +446,8 @@ public class CaptureFragment extends BaseFragment implements View.OnClickListene
         if (event.sensor.getType() == Sensor.TYPE_ORIENTATION) {
             int orientation = getAgleCorrection();
 
-            float roll = event.values[2];
-            float pitch = event.values[1];
+            roll = event.values[2];
+            pitch = event.values[1];
 
             if (pitch < 0 && roll >= -35 && roll <= 35) orientation += 0;
             else if (roll > 0 && pitch >= -45 && pitch  <= 65) orientation += 270;
@@ -435,6 +460,16 @@ public class CaptureFragment extends BaseFragment implements View.OnClickListene
 //            Log.d(TAG,"PITCH "+ pitch);
 //            Log.d(TAG,"ROLL "+ roll);
         }
+    }
+
+    private void showCarPlateKeyboard(){
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.showSoftInput(platesEditText, InputMethodManager.SHOW_IMPLICIT);
+            }
+        }, 800);
     }
 
     private int getAgleCorrection(){

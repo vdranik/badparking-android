@@ -99,6 +99,12 @@ public class ClaimTypeFragment extends BaseFragment {
         nextButton.setVisibility(ClaimService.INST.getClaim().getCrimetypes().size() > 0 ? View.VISIBLE : View.GONE);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        logging(this.getClass(), ClaimService.INST.getClaim());
+    }
+
     public static BaseFragment newInstance() {
         return new ClaimTypeFragment();
     }

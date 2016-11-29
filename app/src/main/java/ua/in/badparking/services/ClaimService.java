@@ -37,14 +37,16 @@ public enum ClaimService {
     private Context context;
     private List<CrimeType> availableCrimeTypes;
 
-    private Claim claim = new Claim();
+    private Claim claim;// = new Claim();
     private String pk;
-    private List<String> uploadedPictures = new ArrayList<>();
+    private List<String> uploadedPictures;// = new ArrayList<>();
 
 
     public void init(Context context) {
         this.context = context;
         mTypesApi = ApiGenerator.INST.createApi(TypesApi.class, Constants.API_BASE_URL, null);
+        claim = new Claim();
+        uploadedPictures = new ArrayList<>();
     }
 
 //     TYPES

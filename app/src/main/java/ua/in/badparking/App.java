@@ -18,7 +18,7 @@ public class App extends MultiDexApplication {
         super.onCreate();
         FacebookSdk.sdkInitialize(getApplicationContext());
 //        if (!BuildConfig.DEBUG) {
-        Crashlytics.start(this);
+        //Crashlytics.start(this);
 //        }
         UserService.INST.init(this);
         ClaimService.INST.init(this);

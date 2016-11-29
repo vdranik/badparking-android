@@ -65,5 +65,19 @@ public class User {
         return token;
     }
 
-
+    @Override
+    public String toString() {
+        return "User{" +
+                "firstName='" + firstName + '\'' +
+                ", middleName='" + middleName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", fullName='" + fullName + '\'' +
+                ", email='" + email + '\'' +
+                ", dob='" + dob + '\'' +
+                ", inn='" + inn + '\'' +
+                ", phone='" + phone + '\'' +
+                ", token='" + token + '\'' +
+                ", isComplete=" + isComplete +
+                '}';
+    }
 }

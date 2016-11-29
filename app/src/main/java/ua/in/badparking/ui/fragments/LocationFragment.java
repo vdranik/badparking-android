@@ -136,21 +136,24 @@ public class LocationFragment extends BaseFragment implements OnMapReadyCallback
             @Override
             public void onClick(View view) {
                 LatLng location = (isOnCurrentPosition) ? currentLocation : customLocation;
-                ClaimService.INST.getClaim().setLatitude(String.valueOf(location.latitude));
-                ClaimService.INST.getClaim().setLongitude(String.valueOf(location.longitude));
 
-                if (address == null) {
-                    ClaimService.INST.getClaim().setCity("unrecognized");
-                    ClaimService.INST.getClaim().setAddress("unrecognized");
-                } else {
-                    String city = address.getLocality();
-                    String addressStr = address.getAddressLine(0);
+                if (location != null) {
+                    ClaimService.INST.getClaim().setLatitude(String.valueOf(location.latitude));
+                    ClaimService.INST.getClaim().setLongitude(String.valueOf(location.longitude));
 
-                    ClaimService.INST.getClaim().setCity((city != null) ? city : "unrecognized");
-                    ClaimService.INST.getClaim().setAddress((addressStr != null) ? addressStr : "unrecognized");
+                    if (address == null) {
+                        ClaimService.INST.getClaim().setCity("unrecognized");
+                        ClaimService.INST.getClaim().setAddress("unrecognized");
+                    } else {
+                        String city = address.getLocality();
+                        String addressStr = address.getAddressLine(0);
+
+                        ClaimService.INST.getClaim().setCity((city != null) ? city : "unrecognized");
+                        ClaimService.INST.getClaim().setAddress((addressStr != null) ? addressStr : "unrecognized");
+                    }
+
+                    ((MainActivity) getActivity()).showPage(MainActivity.PAGE_CLAIM_OVERVIEW);
                 }
-
-                ((MainActivity) getActivity()).showPage(MainActivity.PAGE_CLAIM_OVERVIEW);
             }
         });
     }
@@ -169,6 +172,7 @@ public class LocationFragment extends BaseFragment implements OnMapReadyCallback
 
         getActivity().registerReceiver(locationInfoReceiver, intentFilter);
         Log.d(LogHelper.LOCATION_MONITORING_TAG, "*****Register LocationInfoReciver");
+        logging(this.getClass(), ClaimService.INST.getClaim());
     }
 
     @Override
@@ -260,7 +264,7 @@ public class LocationFragment extends BaseFragment implements OnMapReadyCallback
             String addressStr = (address.getAddressLine(0) != null) ? address.getAddressLine(0) : "";
 
             if (city.isEmpty() && addressStr.isEmpty()) {
-                String.valueOf(currentLocation.longitude + ", " + currentLocation.longitude);
+                positioningText.setText(String.valueOf(currentLocation.longitude + ", " + currentLocation.longitude));
             } else positioningText.setText(city + addressStr);
         }
     }
@@ -297,7 +301,7 @@ public class LocationFragment extends BaseFragment implements OnMapReadyCallback
     @Override
     public void onCameraIdle() {
         if (!isOnCurrentPosition) {
-            customLocationIcon.setColorFilter(getContext().getResources().getColor(R.color.custom_location));
+            customLocationIcon.setColorFilter(getContext().getResources().getColor(R.color.red));
         }
 
         LatLng location = null;

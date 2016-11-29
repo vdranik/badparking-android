@@ -47,6 +47,7 @@ import ua.in.badparking.BuildConfig;
 import ua.in.badparking.R;
 import ua.in.badparking.events.ShowHeaderEvent;
 import ua.in.badparking.listeners.UserLocationListener;
+import ua.in.badparking.model.Claim;
 import ua.in.badparking.services.ClaimService;
 import ua.in.badparking.services.TrackingService;
 import ua.in.badparking.ui.fragments.BaseFragment;
@@ -56,6 +57,8 @@ import ua.in.badparking.ui.fragments.ClaimTypeFragment;
 import ua.in.badparking.ui.fragments.LocationFragment;
 import ua.in.badparking.utils.LogHelper;
 import ua.in.badparking.utils.PermissionsChecker;
+
+import static ua.in.badparking.utils.Constants.CLAIM_STATE;
 
 
 public class MainActivity extends AppCompatActivity  {
@@ -265,14 +268,14 @@ public class MainActivity extends AppCompatActivity  {
 
                 Map<String, Integer> perms = new HashMap<String, Integer>();
                 // Initial
-                //perms.put(Manifest.permission.ACCESS_FINE_LOCATION, PackageManager.PERMISSION_GRANTED);
+                perms.put(Manifest.permission.ACCESS_FINE_LOCATION, PackageManager.PERMISSION_GRANTED);
                 perms.put(Manifest.permission.WRITE_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED);
                 perms.put(Manifest.permission.CAMERA, PackageManager.PERMISSION_GRANTED);
 
                 // Fill with results
                 for (int i = 0; i < permissions.length; i++)
                     perms.put(permissions[i], grantResults[i]);
-                if (/*perms.get(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&*/
+                if (perms.get(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
                          perms.get(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
                          perms.get(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
                     // All Permissions Granted
@@ -299,9 +302,9 @@ public class MainActivity extends AppCompatActivity  {
             List<String> permissionsNeeded = new ArrayList<String>();
             List<String> permissionsList = new ArrayList<String>();
 
-//            if (!addPermission(permissionsList, Manifest.permission.ACCESS_FINE_LOCATION)) {
-//                permissionsNeeded.add("GPS");
-//            }
+            if (!addPermission(permissionsList, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                permissionsNeeded.add("GPS");
+            }
 
             if (!addPermission(permissionsList, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
                 permissionsNeeded.add("Read Storage");
@@ -392,5 +395,6 @@ public class MainActivity extends AppCompatActivity  {
         public void stop(Context context) {
             context.unregisterReceiver(this);
         }
+
     }
 }
